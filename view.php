@@ -25,20 +25,28 @@
 require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
 
+//Para importar el form de input
+require_once($CFG->dirroot . '/mod/prueba1/classes/form/input_details_form.php');
+
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
 
 // Activity instance id.
 $p = optional_param('p', 0, PARAM_INT);
 
+
+//if (!isset($id)){}
+
 if ($id) {
-    $cm = get_coursemodule_from_id('prueba1', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $moduleinstance = $DB->get_record('prueba1', array('id' => $cm->instance), '*', MUST_EXIST);
+  $cm = get_coursemodule_from_id('prueba1', $id, 0, false, MUST_EXIST);
+  $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+  $moduleinstance = $DB->get_record('prueba1', array('id' => $cm->instance), '*', MUST_EXIST);
 } else {
-    $moduleinstance = $DB->get_record('prueba1', array('id' => $p), '*', MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $moduleinstance->course), '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('prueba1', $moduleinstance->id, $course->id, false, MUST_EXIST);
+  $fromform = $mform->get_data();
+  //$id = $fromform->id;
+  $moduleinstance = $DB->get_record('prueba1', array('id' => $fromform->id), '*', MUST_EXIST);
+  $course = $DB->get_record('course', array('id' => $moduleinstance->course), '*', MUST_EXIST);
+  $cm = get_coursemodule_from_instance('prueba1', $moduleinstance->id, $course->id, false, MUST_EXIST);
 }
 
 require_login($course, true, $cm);
@@ -59,9 +67,10 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
 //SQL
+$mform = new input_details_form();
 
 global $DB;
-
+/*
 $sql =
     "SELECT mas.* FROM {attendance_sessions} mas
         WHERE mas.sessdate BETWEEN (
@@ -96,41 +105,59 @@ $params = [
 ];
 
 $attendance = array_values($DB->get_records_sql($sql,$params));
-
-$sql1 =
-    "SELECT
-    mzmp.userid,
-    mzmp.name,
-    SUM(mzmp.duration) AS total_duration,
-    (mzmd.end_time - mzmd.start_time) AS meeting_duration,
-    (SUM(mzmp.duration) * 100.0 / (mzmd.end_time - mzmd.start_time)) AS attendance_percentage,
-    MIN(mzmp.join_time),
-    MAX(mzmp.leave_time)
-    FROM
-        {zoom_meeting_participants} mzmp
-    JOIN
-        {zoom_meeting_details} mzmd ON mzmp.detailsid = :mzmd_id
-    WHERE
-        mzmp.detailsid = :mzmp_detailsid
-    GROUP BY
-        mzmp.userid, mzmp.name, mzmd.start_time, mzmd.end_time";
-
-$params1=['mzmd_id'=>'12299','mzmp_detailsid'=>'12299'];
-$presentes = array_values($DB->get_records_sql($sql1,$params1));
-
-foreach($presentes as $obj){
-    $obj->min_join_time = $obj->{'min(mzmp.join_time)'};
-    $obj->max_leave_time = $obj->{'max(mzmp.leave_time)'};
-}
-
-$templatecontext = (object)[
-    'attendance'=> $attendance,
-    'presentes'=> $presentes
-];
-
+*/
 
 echo $OUTPUT->header();
 
-echo $OUTPUT->render_from_template('prueba1/getAttendance',$templatecontext);
+if ($fromform = $mform->get_data()) {
+  // When the form is submitted, and the data is successfully validated,
+  // the `get_data()` function will return the data posted in the form.
+  \core\notification::info("Info del Form <br>Texto ingresado - $fromform->texto<br>");
+
+  $sql1 =
+  "SELECT
+  mzmp.userid,
+  mzmp.name,
+  SUM(mzmp.duration) AS total_duration,
+  (mzmd.end_time - mzmd.start_time) AS meeting_duration,
+  (SUM(mzmp.duration) * 100 / (mzmd.end_time - mzmd.start_time)) AS attendance_percentage,
+  MIN(mzmp.join_time),
+  MAX(mzmp.leave_time)
+  FROM
+    {zoom_meeting_participants} mzmp
+  JOIN
+    {zoom_meeting_details} mzmd ON mzmp.detailsid = mzmd.id
+  WHERE
+    mzmp.detailsid = :mzmp_detailsid
+  GROUP BY
+    mzmp.userid, mzmp.name, mzmd.start_time, mzmd.end_time";
+
+  $params1=['mzmp_detailsid'=>$fromform->texto];
+  $presentes = array_values($DB->get_records_sql($sql1,$params1));
+
+  foreach($presentes as $obj){
+    $obj->min_join_time = $obj->{'min(mzmp.join_time)'};
+    $obj->max_leave_time = $obj->{'max(mzmp.leave_time)'};
+  }
+
+  $templatecontext = (object)[
+    'presentes'=> $presentes
+  ];
+
+  $mform->display();
+  echo $OUTPUT->render_from_template('prueba1/getAttendance',$templatecontext);
+  //$mform->display();
+  
+} else {
+  // This branch is executed if the form is submitted but the data doesn't
+  // validate and the form should be redisplayed or on the first display of the form.
+  
+  // Set anydefault data (if any).
+  $mform->set_data($toform);
+  $mform->display();
+  
+  // Display the form.
+}
+
 
 echo $OUTPUT->footer();
