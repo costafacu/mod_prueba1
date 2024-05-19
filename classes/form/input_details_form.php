@@ -11,14 +11,20 @@
 require_once("$CFG->libdir/formslib.php");
 
 class input_details_form extends moodleform {
+  private $id;
+  public function __construct($id) {
+    $this->id = $id;
+    parent::__construct();
+  }
     public function definition() {
-      global $CFG;
       $mform = $this->_form;
 
-      $mform->addElement('text', 'texto', 'Ingrese el detalle del zoom id');
-      $mform->setType('texto', PARAM_NOTAGS);
-      $mform->setDefault('texto','12299');
-      $mform->addElement('hidden', 'id', '5');
+      $mform->addElement('text', 'meeting_id', 'Ingrese el detalle del zoom id');
+      $mform->setType('meeting_id', PARAM_NOTAGS);
+      $mform->setDefault('meeting_id','12299');
+      
+      $mform->addElement('hidden', 'id', $this->id);
+
       
       $this->add_action_buttons();
     }                           

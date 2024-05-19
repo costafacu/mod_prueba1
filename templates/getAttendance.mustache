@@ -23,15 +23,51 @@
 
     }
 }}
-<h4>Query</h4>
-{{#presentes}}
-    <li>
-        <em>userid</em>: {{userid}}
-        <em>name</em>: {{name}}
-        <em>total_duration</em>: {{total_duration}}
-        <em>meeting_duration</em>: {{meeting_duration}}
-        <em>attendance_percentage</em>: {{attendance_percentage}}
-        <em>min_join_time</em>: {{min_join_time}}
-        <em>max_leave_time</em>: {{max_leave_time}}
-    </li>
-{{/presentes}}
+<style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    /* Add spacing between table columns */
+    th, td {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+</style>
+<table>
+    <thead>
+        <tr>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Total Duration</th>
+            <th>Meeting Duration</th>
+            <th>Percentage</th>
+            <th>Join Time</th>
+            <th>Leave Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#presentes}}
+        <tr>
+            <td>{{userid}}</td>
+            <td>{{name}}</td>
+            <td>{{total_duration}}</td>
+            <td>{{meeting_duration}}</td>
+            <td>{{attendance_percentage}}%</td>
+            <td>{{min_join_time}}</td>
+            <td>{{max_leave_time}}</td>
+        </tr>
+        {{/presentes}}
+    </tbody>
+</table>
